@@ -57,12 +57,9 @@ export type AnimationPhase =
   | 'done'
 
 export function useCouponCenter() {
-  const [isOpen, setIsOpen] = useState(false)
   const [coupons, setCoupons] = useState<CouponItem[]>(INITIAL_COUPONS)
   const [phase, setPhase] = useState<AnimationPhase>('idle')
 
-  const open = useCallback(() => setIsOpen(true), [])
-  const close = useCallback(() => setIsOpen(false), [])
   const reset = useCallback(() => {
     setCoupons(INITIAL_COUPONS)
     setPhase('idle')
@@ -91,12 +88,9 @@ export function useCouponCenter() {
   }, [phase])
 
   return {
-    isOpen,
     coupons,
     phase,
     footerText,
-    open,
-    close,
     reset,
     claimPackage,
     setPhase,
