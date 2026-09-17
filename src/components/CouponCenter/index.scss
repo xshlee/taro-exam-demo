@@ -27,6 +27,7 @@
   border-top-right-radius: 24rpx;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .coupon-center__header {
@@ -52,6 +53,11 @@
 }
 
 .coupon-center__footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
   height: 112rpx;
   background-color: #ffffff;
   display: flex;
