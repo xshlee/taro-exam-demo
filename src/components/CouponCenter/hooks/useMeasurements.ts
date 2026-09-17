@@ -50,13 +50,22 @@ export function useMeasurements() {
     })
   }
 
-  const measureRN = async (): Promise<MeasuredTarget[]> => {
-    // RN 分支在 Task 10 与 RedPacket 一起实现，这里先返回空数组兜底
-    return []
+  const measureRN = async (input: PositionInput): Promise<MeasuredTarget[]> => {
+    // RN 兜底：基于标准 375dp 屏宽估算位置，1rpx ≈ 0.5dp
+    const rpx = (v: number) => v * 0.5
+    const start: Point = { x: 300, y: 240 }
+    return input.couponIds.map((id, index) => ({
+      couponId: id,
+      start,
+      end: {
+        x: rpx(90),
+        y: rpx(260 + index * 200 + 70),
+      },
+    }))
   }
 
   const measure = (input: PositionInput): Promise<MeasuredTarget[]> => {
-    return isRN ? measureRN() : measureWeb(input)
+    return isRN ? measureRN(input) : measureWeb(input)
   }
 
   return { measure }
