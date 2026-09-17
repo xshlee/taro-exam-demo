@@ -40,6 +40,7 @@ function CouponCard(
     >
       <View
         ref={imageRef}
+        id={`coupon-img-${item.id}`}
         className='coupon-card__image'
       >
         <Text className='coupon-card__image-text'>🍔</Text>
@@ -84,6 +85,7 @@ function CouponCard(
       <View className='coupon-card__action'>
         {item.status === 'available' && (
           <View
+            id={`claim-btn-${item.id}`}
             className='coupon-card__btn coupon-card__btn--claim'
             onClick={() => onClaim?.(item)}
           >

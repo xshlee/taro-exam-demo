@@ -1,5 +1,7 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import type { CouponItem } from '../../../types/coupon'
+import { useAnimation } from './useAnimation'
+import { useMeasurements } from './useMeasurements'
 
 const INITIAL_COUPONS: CouponItem[] = [
   {
@@ -48,27 +50,22 @@ function generateNewCoupons(seedId: string): CouponItem[] {
   }))
 }
 
-export type AnimationPhase =
-  | 'idle'
-  | 'claiming'
-  | 'exploding'
-  | 'landed'
-  | 'flashing'
-  | 'done'
-
 export function useCouponCenter() {
   const [coupons, setCoupons] = useState<CouponItem[]>(INITIAL_COUPONS)
-  const [phase, setPhase] = useState<AnimationPhase>('idle')
+  const [toast, setToast] = useState<string | null>(null)
+  const { measure } = useMeasurements()
 
-  const reset = useCallback(() => {
-    setCoupons(INITIAL_COUPONS)
-    setPhase('idle')
+  const handleAnimationDone = useCallback(() => {
+    setToast(null)
   }, [])
+
+  const { state: animState, startExplosion, clear } = useAnimation(handleAnimationDone)
 
   const claimPackage = useCallback(
     (packageId: string) => {
-      if (phase !== 'idle' && phase !== 'done') return
-      setPhase('claiming')
+      if (animState.phase !== 'idle' && animState.phase !== 'done') return
+      clear()
+
       const newCoupons = generateNewCoupons(packageId)
       setCoupons((prev) => {
         const index = prev.findIndex((c) => c.id === packageId)
@@ -76,23 +73,51 @@ export function useCouponCenter() {
         next.splice(index + 1, 0, ...newCoupons)
         return next
       })
-      return newCoupons
+
+      // 等待新券渲染并测量
+      setTimeout(() => {
+        measure({
+          packageId,
+          couponIds: newCoupons.map((c) => c.id),
+        }).then((targets) => {
+          if (targets.length === 0) return
+          setToast(`成功领取${newCoupons.length}张券`)
+          startExplosion(targets)
+        })
+      }, 100)
     },
-    [phase]
+    [animState.phase, clear, measure, startExplosion]
   )
 
+  // 动画结束后清除 isNew 标记
+  useEffect(() => {
+    if (animState.phase === 'done') {
+      const timer = setTimeout(() => {
+        setCoupons((prev) =>
+          prev.map((c) => (c.isNew ? { ...c, isNew: false } : c))
+        )
+      }, 500)
+      return () => clearTimeout(timer)
+    }
+  }, [animState.phase])
+
   const footerText = useMemo(() => {
-    if (phase === 'claiming' || phase === 'exploding') return '领券中...'
-    if (phase === 'done' || phase === 'flashing' || phase === 'landed') return '再看一次'
+    if (
+      animState.phase === 'exploding' ||
+      animState.phase === 'landed' ||
+      animState.phase === 'flashing'
+    )
+      return '领券中...'
+    if (animState.phase === 'done') return '再看一次'
     return '一键领券'
-  }, [phase])
+  }, [animState.phase])
 
   return {
     coupons,
-    phase,
+    phase: animState.phase,
+    packets: animState.packets,
     footerText,
-    reset,
+    toast,
     claimPackage,
-    setPhase,
   }
 }
