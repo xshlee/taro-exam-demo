@@ -8,15 +8,22 @@ interface CouponListProps {
   coupons: CouponItem[]
   flashOn?: boolean
   claimingId?: string | null
+  scrollIntoView?: string
   onClaim?: (item: CouponItem) => void
 }
 
 function CouponList(
-  { coupons, flashOn, claimingId, onClaim }: CouponListProps,
+  { coupons, flashOn, claimingId, scrollIntoView, onClaim }: CouponListProps,
   ref: React.Ref<any>
 ) {
   return (
-    <ScrollView ref={ref} scrollY className='coupon-list'>
+    <ScrollView
+      ref={ref}
+      scrollY
+      scrollWithAnimation
+      scrollIntoView={scrollIntoView}
+      className='coupon-list'
+    >
       {coupons.map((item) => (
         <CouponCard
           key={item.id}
@@ -26,7 +33,7 @@ function CouponList(
           onClaim={onClaim}
         />
       ))}
-      <View className='coupon-list__safe-area' />
+      <View id='coupon-list-bottom' className='coupon-list__safe-area' />
     </ScrollView>
   )
 }

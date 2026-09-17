@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text } from '@tarojs/components'
 import CouponTabs from '../CouponTabs'
 import CouponList from '../CouponList'
@@ -33,6 +33,9 @@ function CouponSheet({
   onClose,
 }: CouponSheetProps) {
   const [entered, setEntered] = useState(false)
+  const [leaving, setLeaving] = useState(false)
+  const [scrollTarget, setScrollTarget] = useState('')
+  const firstRenderRef = useRef(true)
 
   // 挂载后下一帧移除 hidden 态，触发滑入/淡入过渡
   useEffect(() => {
@@ -40,8 +43,35 @@ function CouponSheet({
     return () => clearTimeout(timer)
   }, [])
 
+  // 券列表变化（领券插入新卡）后滚到底部，保证最下面的卡片完整可见
+  useEffect(() => {
+    if (firstRenderRef.current) {
+      firstRenderRef.current = false
+      return
+    }
+    setScrollTarget('coupon-list-bottom')
+    const timer = setTimeout(() => setScrollTarget(''), 50)
+    return () => clearTimeout(timer)
+  }, [coupons])
+
+  // 关闭：先播放下滑收起动画，300ms 后再真正卸载
+  useEffect(() => {
+    if (!leaving) return
+    const timer = setTimeout(onClose, 300)
+    return () => clearTimeout(timer)
+  }, [leaving, onClose])
+
+  const requestClose = useCallback(() => {
+    if (isRN) {
+      // RN 无 CSS transition，直接关闭
+      onClose()
+      return
+    }
+    setLeaving(true)
+  }, [onClose])
+
   // RN 无 CSS transition，直接呈现终态（即时出现兜底）
-  const shown = entered || isRN
+  const shown = isRN ? true : entered && !leaving
 
   return (
     <View className='coupon-center'>
@@ -49,7 +79,7 @@ function CouponSheet({
         className={`coupon-center__mask ${
           shown ? '' : 'coupon-center__mask--hidden'
         }`}
-        onClick={onClose}
+        onClick={requestClose}
       />
       <View
         id='coupon-center-sheet'
@@ -59,7 +89,7 @@ function CouponSheet({
       >
         <View className='coupon-center__header'>
           <Text className='coupon-center__title'>优惠中心</Text>
-          <Text className='coupon-center__close' onClick={onClose}>
+          <Text className='coupon-center__close' onClick={requestClose}>
             ×
           </Text>
         </View>
@@ -68,6 +98,7 @@ function CouponSheet({
           coupons={coupons}
           flashOn={flashOn}
           claimingId={claimingId}
+          scrollIntoView={scrollTarget}
           onClaim={(item) => onClaim(item.id)}
         />
 
