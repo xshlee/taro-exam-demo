@@ -6,6 +6,8 @@ import { isRN } from '../../../utils/platform'
 
 const DURATION = 700
 const STAGGER = 80
+const FLASH_INTERVAL = 200
+const FLASH_COUNT = 3 // 新券高亮闪烁次数
 const EASE = (t: number) => t * (2 - t) // easeOutQuad
 
 export type AnimationPhase =
@@ -19,6 +21,7 @@ export interface AnimationState {
   phase: AnimationPhase
   packets: FlyingPacket[]
   progress: number
+  flashOn: boolean
 }
 
 export function useAnimation(onDone?: () => void) {
@@ -26,15 +29,19 @@ export function useAnimation(onDone?: () => void) {
     phase: 'idle',
     packets: [],
     progress: 0,
+    flashOn: true,
   })
   const rafRef = useRef<number | null>(null)
   const startTimeRef = useRef<number>(0)
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   const clear = useCallback(() => {
     if (rafRef.current && !isRN) {
       cancelAnimationFrame(rafRef.current)
     }
     rafRef.current = null
+    timersRef.current.forEach(clearTimeout)
+    timersRef.current = []
   }, [])
 
   const startExplosion = useCallback(
@@ -52,7 +59,7 @@ export function useAnimation(onDone?: () => void) {
         control: getControlPoint(t.start, t.end),
       }))
 
-      setState({ phase: 'exploding', packets, progress: 0 })
+      setState({ phase: 'exploding', packets, progress: 0, flashOn: true })
 
       const tick = () => {
         const elapsed = Date.now() - startTimeRef.current
@@ -68,14 +75,26 @@ export function useAnimation(onDone?: () => void) {
         const allLanded = updatedPackets.every((p) => p.progress >= 1)
 
         if (allLanded) {
-          setState({ phase: 'landed', packets: updatedPackets, progress: 1 })
-          setTimeout(() => {
-            setState((prev) => ({ ...prev, phase: 'flashing' }))
+          // 红包落袋即消失，进入新券闪烁阶段（亮/灭交替 FLASH_COUNT 次）
+          setState({ phase: 'landed', packets: [], progress: 1, flashOn: true })
+          const total = FLASH_COUNT * 2
+          for (let step = 1; step <= total; step++) {
+            timersRef.current.push(
+              setTimeout(() => {
+                setState((prev) => ({
+                  ...prev,
+                  phase: 'flashing',
+                  flashOn: step % 2 === 0,
+                }))
+              }, step * FLASH_INTERVAL)
+            )
+          }
+          timersRef.current.push(
             setTimeout(() => {
-              setState((prev) => ({ ...prev, phase: 'done' }))
+              setState((prev) => ({ ...prev, phase: 'done', flashOn: true }))
               onDone?.()
-            }, 500)
-          }, 50)
+            }, (total + 1) * FLASH_INTERVAL)
+          )
           return
         }
 
@@ -83,6 +102,7 @@ export function useAnimation(onDone?: () => void) {
           phase: 'exploding',
           packets: updatedPackets,
           progress: maxProgress,
+          flashOn: true,
         })
         rafRef.current = requestAnimationFrame(tick)
       }

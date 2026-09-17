@@ -6,17 +6,25 @@ import './index.scss'
 
 interface CouponListProps {
   coupons: CouponItem[]
+  flashOn?: boolean
+  claimingId?: string | null
   onClaim?: (item: CouponItem) => void
 }
 
 function CouponList(
-  { coupons, onClaim }: CouponListProps,
+  { coupons, flashOn, claimingId, onClaim }: CouponListProps,
   ref: React.Ref<any>
 ) {
   return (
     <ScrollView ref={ref} scrollY className='coupon-list'>
       {coupons.map((item) => (
-        <CouponCard key={item.id} item={item} onClaim={onClaim} />
+        <CouponCard
+          key={item.id}
+          item={item}
+          flashOn={flashOn}
+          claimingId={claimingId}
+          onClaim={onClaim}
+        />
       ))}
       <View className='coupon-list__safe-area' />
     </ScrollView>

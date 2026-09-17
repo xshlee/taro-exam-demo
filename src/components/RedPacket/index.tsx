@@ -53,6 +53,13 @@ function RNRedPacket({ packet }: RedPacketProps) {
         position: 'absolute',
         left: 0,
         top: 0,
+        // 64rpx ≈ 32dp，负 margin 半尺寸偏移让红包中心对准轨迹终点
+        width: 32,
+        height: 32,
+        marginLeft: -16,
+        marginTop: -16,
+        alignItems: 'center',
+        justifyContent: 'center',
         transform: [{ translateX }, { translateY }, { scale: 0.85 }],
         opacity: 0.9,
       }}

@@ -1,7 +1,9 @@
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import type { CouponItem } from '../../../types/coupon'
 import { useAnimation } from './useAnimation'
 import { useMeasurements } from './useMeasurements'
+
+const CLAIM_DELAY = 2000 // 点击领取后展示「领券中...」的延时
 
 const INITIAL_COUPONS: CouponItem[] = [
   {
@@ -53,7 +55,14 @@ function generateNewCoupons(seedId: string): CouponItem[] {
 export function useCouponCenter() {
   const [coupons, setCoupons] = useState<CouponItem[]>(INITIAL_COUPONS)
   const [toast, setToast] = useState<string | null>(null)
+  const [claimingId, setClaimingId] = useState<string | null>(null)
   const { measure } = useMeasurements()
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  useEffect(() => {
+    const timers = timersRef.current
+    return () => timers.forEach(clearTimeout)
+  }, [])
 
   const handleAnimationDone = useCallback(() => {
     setToast(null)
@@ -63,30 +72,49 @@ export function useCouponCenter() {
 
   const claimPackage = useCallback(
     (packageId: string) => {
-      if (animState.phase !== 'idle' && animState.phase !== 'done') return
+      if (
+        claimingId !== null ||
+        (animState.phase !== 'idle' && animState.phase !== 'done')
+      )
+        return
       clear()
+      // 被点击的券包按钮先显示「领券中...」，2s 后再插入新券并执行动画
+      setClaimingId(packageId)
 
       const newCoupons = generateNewCoupons(packageId)
-      setCoupons((prev) => {
-        const index = prev.findIndex((c) => c.id === packageId)
-        const next = [...prev]
-        next.splice(index + 1, 0, ...newCoupons)
-        return next
-      })
 
-      // 等待新券渲染并测量
-      setTimeout(() => {
-        measure({
-          packageId,
-          couponIds: newCoupons.map((c) => c.id),
-        }).then((targets) => {
-          if (targets.length === 0) return
-          setToast(`成功领取${newCoupons.length}张券`)
-          startExplosion(targets)
-        })
-      }, 100)
+      timersRef.current.push(
+        setTimeout(() => {
+          setCoupons((prev) => {
+            // 移除上一轮领到的新券，避免重复领取时累积
+            const cleaned = prev.filter(
+              (c) => !c.id.startsWith(`${packageId}-new-`)
+            )
+            const index = cleaned.findIndex((c) => c.id === packageId)
+            if (index < 0) return prev
+            const next = [...cleaned]
+            next.splice(index + 1, 0, ...newCoupons)
+            return next
+          })
+
+          // 等待新券渲染并测量
+          timersRef.current.push(
+            setTimeout(() => {
+              measure({
+                packageId,
+                couponIds: newCoupons.map((c) => c.id),
+              }).then((targets) => {
+                setClaimingId(null)
+                if (targets.length === 0) return
+                setToast(`成功领取${newCoupons.length}张券`)
+                startExplosion(targets)
+              })
+            }, 100)
+          )
+        }, CLAIM_DELAY)
+      )
     },
-    [animState.phase, clear, measure, startExplosion]
+    [claimingId, animState.phase, clear, measure, startExplosion]
   )
 
   // 动画结束后清除 isNew 标记
@@ -116,6 +144,8 @@ export function useCouponCenter() {
     coupons,
     phase: animState.phase,
     packets: animState.packets,
+    flashOn: animState.flashOn,
+    claimingId,
     footerText,
     toast,
     claimPackage,

@@ -11,7 +11,7 @@ interface CouponCenterProps {
 }
 
 export default function CouponCenter({ visible, onClose }: CouponCenterProps) {
-  const { coupons, packets, footerText, toast, claimPackage } =
+  const { coupons, packets, flashOn, claimingId, footerText, toast, claimPackage } =
     useCouponCenter()
 
   if (!visible) return null
@@ -27,7 +27,12 @@ export default function CouponCenter({ visible, onClose }: CouponCenterProps) {
           </Text>
         </View>
         <CouponTabs active='领券' />
-        <CouponList coupons={coupons} onClaim={(item) => claimPackage(item.id)} />
+        <CouponList
+          coupons={coupons}
+          flashOn={flashOn}
+          claimingId={claimingId}
+          onClaim={(item) => claimPackage(item.id)}
+        />
         <View className='coupon-center__footer'>
           <Text className='coupon-center__footer-text'>{footerText}</Text>
         </View>

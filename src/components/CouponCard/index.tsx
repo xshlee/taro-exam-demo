@@ -15,11 +15,13 @@ export interface CouponCardRef {
 
 interface CouponCardProps {
   item: CouponItem
+  flashOn?: boolean
+  claimingId?: string | null
   onClaim?: (item: CouponItem) => void
 }
 
 function CouponCard(
-  { item, onClaim }: CouponCardProps,
+  { item, flashOn = true, claimingId, onClaim }: CouponCardProps,
   ref: React.Ref<CouponCardRef>
 ) {
   const imageRef = useRef<any>(null)
@@ -31,10 +33,11 @@ function CouponCard(
 
   const isClaimed = item.status === 'claimed'
   const isUnavailable = item.status === 'unavailable'
+  const isClaiming = claimingId === item.id
 
   return (
     <View
-      className={`coupon-card ${item.isNew ? 'coupon-card--new' : ''} ${
+      className={`coupon-card ${item.isNew && flashOn ? 'coupon-card--new' : ''} ${
         item.isPackage ? 'coupon-card--package' : ''
       }`}
     >
@@ -86,10 +89,14 @@ function CouponCard(
         {item.status === 'available' && (
           <View
             id={`claim-btn-${item.id}`}
-            className='coupon-card__btn coupon-card__btn--claim'
-            onClick={() => onClaim?.(item)}
+            className={`coupon-card__btn ${
+              isClaiming
+                ? 'coupon-card__btn--claiming'
+                : 'coupon-card__btn--claim'
+            }`}
+            onClick={isClaiming ? undefined : () => onClaim?.(item)}
           >
-            领券
+            {isClaiming ? '领券中...' : '领券'}
           </View>
         )}
         {isClaimed && (
@@ -105,8 +112,10 @@ function CouponCard(
       </View>
 
       {isClaimed && (
-        <View className='coupon-card__watermark'>
-          <Text className='coupon-card__watermark-text'>已领取</Text>
+        <View className='coupon-card__watermark-wrap'>
+          <View className='coupon-card__watermark'>
+            <Text className='coupon-card__watermark-text'>已领取</Text>
+          </View>
         </View>
       )}
     </View>
