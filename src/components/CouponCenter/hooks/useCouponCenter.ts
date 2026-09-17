@@ -58,6 +58,7 @@ export function useCouponCenter() {
   const [claimingId, setClaimingId] = useState<string | null>(null)
   const { measure } = useMeasurements()
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+  const claimedPkgRef = useRef<string | null>(null)
 
   useEffect(() => {
     const timers = timersRef.current
@@ -80,6 +81,7 @@ export function useCouponCenter() {
       clear()
       // 被点击的券包按钮先显示「领券中...」，2s 后再插入新券并执行动画
       setClaimingId(packageId)
+      claimedPkgRef.current = packageId
 
       const newCoupons = generateNewCoupons(packageId)
 
@@ -117,9 +119,14 @@ export function useCouponCenter() {
     [claimingId, animState.phase, clear, measure, startExplosion]
   )
 
-  // 动画结束后清除 isNew 标记
+  // 动画结束后移除券包卡片，并延迟清除 isNew 标记
   useEffect(() => {
     if (animState.phase === 'done') {
+      const pkgId = claimedPkgRef.current
+      if (pkgId) {
+        setCoupons((prev) => prev.filter((c) => c.id !== pkgId))
+        claimedPkgRef.current = null
+      }
       const timer = setTimeout(() => {
         setCoupons((prev) =>
           prev.map((c) => (c.isNew ? { ...c, isNew: false } : c))

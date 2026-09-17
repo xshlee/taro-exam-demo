@@ -7,9 +7,11 @@
   padding-bottom: 24rpx;
   padding-left: 24rpx;
   background-color: #ffffff;
-  border-bottom-width: 1rpx;
-  border-bottom-style: solid;
-  border-bottom-color: #f0f0f0;
+  border-top-left-radius: 16rpx;
+  border-top-right-radius: 16rpx;
+  border-bottom-left-radius: 16rpx;
+  border-bottom-right-radius: 16rpx;
+  margin-bottom: 24rpx;
   position: relative;
 }
 
@@ -19,12 +21,6 @@
 
 .coupon-card--package {
   background-color: #fff8e6;
-  border-top-width: 1rpx;
-  border-top-style: solid;
-  border-top-color: #ffe0b2;
-  border-bottom-width: 1rpx;
-  border-bottom-style: solid;
-  border-bottom-color: #ffe0b2;
 }
 
 .coupon-card__image {
@@ -127,11 +123,6 @@
 .coupon-card__btn--claim {
   color: #ffffff;
   background-color: #d6001c;
-}
-
-.coupon-card__btn--claiming {
-  color: #ffffff;
-  background-color: #999999;
 }
 
 .coupon-card__btn--use {

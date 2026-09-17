@@ -89,11 +89,7 @@ function CouponCard(
         {item.status === 'available' && (
           <View
             id={`claim-btn-${item.id}`}
-            className={`coupon-card__btn ${
-              isClaiming
-                ? 'coupon-card__btn--claiming'
-                : 'coupon-card__btn--claim'
-            }`}
+            className='coupon-card__btn coupon-card__btn--claim'
             onClick={isClaiming ? undefined : () => onClaim?.(item)}
           >
             {isClaiming ? '领券中...' : '领券'}
