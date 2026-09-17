@@ -2,43 +2,60 @@ import Taro from '@tarojs/taro'
 import type { Point } from '../../../types/coupon'
 import { isRN } from '../../../utils/platform'
 
-export interface PositionInput {
-  packageId: string
-  couponIds: string[]
-}
-
 export interface MeasuredTarget {
   couponId: string
   start: Point
   end: Point
 }
 
+export interface MeasuredEnd {
+  couponId: string
+  end: Point
+}
+
 export function useMeasurements() {
-  const measureWeb = (input: PositionInput): Promise<MeasuredTarget[]> => {
+  // 券包按钮中心（相对浮层），需在券包卡片移除前测量
+  const measureStartWeb = (packageId: string): Promise<Point | null> => {
     return new Promise((resolve) => {
       const query = Taro.createSelectorQuery()
       query.select(`#coupon-center-sheet`).boundingClientRect()
-      query.select(`#claim-btn-${input.packageId}`).boundingClientRect()
-      input.couponIds.forEach((id) => {
+      query.select(`#claim-btn-${packageId}`).boundingClientRect()
+      query.exec((rects) => {
+        const [sheet, btn] =
+          rects as Taro.NodesRef.BoundingClientRectCallbackResult[]
+        if (!sheet || !btn) {
+          resolve(null)
+          return
+        }
+        resolve({
+          x: btn.left + btn.width / 2 - sheet.left,
+          y: btn.top + btn.height / 2 - sheet.top,
+        })
+      })
+    })
+  }
+
+  // 新券图中心（相对浮层），需在新券渲染后测量
+  const measureEndsWeb = (couponIds: string[]): Promise<MeasuredEnd[]> => {
+    return new Promise((resolve) => {
+      const query = Taro.createSelectorQuery()
+      query.select(`#coupon-center-sheet`).boundingClientRect()
+      couponIds.forEach((id) => {
         query.select(`#coupon-img-${id}`).boundingClientRect()
       })
       query.exec((rects) => {
-        const [sheet, btn, ...imgRects] = rects as Taro.NodesRef.BoundingClientRectCallbackResult[]
-        if (!sheet || !btn) {
+        const [sheet, ...imgRects] =
+          rects as Taro.NodesRef.BoundingClientRectCallbackResult[]
+        if (!sheet) {
           resolve([])
           return
         }
-        const start: Point = {
-          x: btn.left + btn.width / 2 - sheet.left,
-          y: btn.top + btn.height / 2 - sheet.top,
-        }
-        const results: MeasuredTarget[] = []
-        input.couponIds.forEach((id, index) => {
+        const results: MeasuredEnd[] = []
+        couponIds.forEach((id, index) => {
           const img = imgRects[index]
           if (!img) return
           results.push({
             couponId: id,
-            start,
             end: {
               x: img.left + img.width / 2 - sheet.left,
               y: img.top + img.height / 2 - sheet.top,
@@ -50,13 +67,15 @@ export function useMeasurements() {
     })
   }
 
-  const measureRN = async (input: PositionInput): Promise<MeasuredTarget[]> => {
-    // RN 兜底：基于标准 375dp 屏宽估算位置，1rpx ≈ 0.5dp
+  // RN 兜底：基于标准 375dp 屏宽估算位置，1rpx ≈ 0.5dp
+  const measureStartRN = async (): Promise<Point | null> => {
+    return { x: 300, y: 240 }
+  }
+
+  const measureEndsRN = async (couponIds: string[]): Promise<MeasuredEnd[]> => {
     const rpx = (v: number) => v * 0.5
-    const start: Point = { x: 300, y: 240 }
-    return input.couponIds.map((id, index) => ({
+    return couponIds.map((id, index) => ({
       couponId: id,
-      start,
       end: {
         x: rpx(90),
         y: rpx(260 + index * 200 + 70),
@@ -64,9 +83,13 @@ export function useMeasurements() {
     }))
   }
 
-  const measure = (input: PositionInput): Promise<MeasuredTarget[]> => {
-    return isRN ? measureRN(input) : measureWeb(input)
+  const measureStart = (packageId: string): Promise<Point | null> => {
+    return isRN ? measureStartRN() : measureStartWeb(packageId)
   }
 
-  return { measure }
+  const measureEnds = (couponIds: string[]): Promise<MeasuredEnd[]> => {
+    return isRN ? measureEndsRN(couponIds) : measureEndsWeb(couponIds)
+  }
+
+  return { measureStart, measureEnds }
 }

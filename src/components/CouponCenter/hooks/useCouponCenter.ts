@@ -55,9 +55,8 @@ export function useCouponCenter() {
   const [coupons, setCoupons] = useState<CouponItem[]>(INITIAL_COUPONS)
   const [toast, setToast] = useState<string | null>(null)
   const [claimingId, setClaimingId] = useState<string | null>(null)
-  const { measure } = useMeasurements()
+  const { measureStart, measureEnds } = useMeasurements()
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
-  const claimedPkgRef = useRef<string | null>(null)
 
   useEffect(() => {
     const timers = timersRef.current
@@ -78,54 +77,53 @@ export function useCouponCenter() {
       )
         return
       clear()
-      // 被点击的券包按钮先显示「领券中...」，2s 后再插入新券并执行动画
+      // 被点击的券包按钮先显示「领券中...」，2s 后再执行后续流程
       setClaimingId(packageId)
-      claimedPkgRef.current = packageId
 
       const newCoupons = generateNewCoupons(packageId)
 
       timersRef.current.push(
         setTimeout(() => {
-          setCoupons((prev) => {
-            // 移除上一轮领到的新券，避免重复领取时累积
-            const cleaned = prev.filter(
-              (c) => !c.id.startsWith(`${packageId}-new-`)
-            )
-            const index = cleaned.findIndex((c) => c.id === packageId)
-            if (index < 0) return prev
-            const next = [...cleaned]
-            next.splice(index + 1, 0, ...newCoupons)
-            return next
-          })
+          // 1. 先测量券包按钮起点（此时卡片还在）
+          measureStart(packageId).then((start) => {
+            // 2. 动画播放前就让券包卡片消失，新券插入原位置
+            setCoupons((prev) => {
+              const pkgIndex = prev.findIndex((c) => c.id === packageId)
+              const cleaned = prev.filter(
+                (c) => c.id !== packageId && !c.id.startsWith(`${packageId}-new-`)
+              )
+              const next = [...cleaned]
+              next.splice(Math.max(pkgIndex, 0), 0, ...newCoupons)
+              return next
+            })
 
-          // 等待新券渲染并测量
-          timersRef.current.push(
-            setTimeout(() => {
-              measure({
-                packageId,
-                couponIds: newCoupons.map((c) => c.id),
-              }).then((targets) => {
-                setClaimingId(null)
-                if (targets.length === 0) return
-                setToast(`成功领取${newCoupons.length}张券`)
-                startExplosion(targets)
-              })
-            }, 100)
-          )
+            // 3. 等待新券渲染后测量落点
+            timersRef.current.push(
+              setTimeout(() => {
+                measureEnds(newCoupons.map((c) => c.id)).then((ends) => {
+                  setClaimingId(null)
+                  if (!start || ends.length === 0) return
+                  setToast(`成功领取${newCoupons.length}张券`)
+                  startExplosion(
+                    ends.map((e) => ({
+                      couponId: e.couponId,
+                      start,
+                      end: e.end,
+                    }))
+                  )
+                })
+              }, 100)
+            )
+          })
         }, CLAIM_DELAY)
       )
     },
-    [claimingId, animState.phase, clear, measure, startExplosion]
+    [claimingId, animState.phase, clear, measureStart, measureEnds, startExplosion]
   )
 
-  // 动画结束后移除券包卡片，并延迟清除 isNew 标记
+  // 动画结束后延迟清除 isNew 标记
   useEffect(() => {
     if (animState.phase === 'done') {
-      const pkgId = claimedPkgRef.current
-      if (pkgId) {
-        setCoupons((prev) => prev.filter((c) => c.id !== pkgId))
-        claimedPkgRef.current = null
-      }
       const timer = setTimeout(() => {
         setCoupons((prev) =>
           prev.map((c) => (c.isNew ? { ...c, isNew: false } : c))

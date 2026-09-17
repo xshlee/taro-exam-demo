@@ -41,77 +41,86 @@ function CouponCard(
         item.isPackage ? 'coupon-card--package' : ''
       }`}
     >
-      <View
-        ref={imageRef}
-        id={`coupon-img-${item.id}`}
-        className='coupon-card__image'
-      >
-        <Text className='coupon-card__image-text'>🍔</Text>
-      </View>
+      <View className='coupon-card__main'>
+        <View
+          ref={imageRef}
+          id={`coupon-img-${item.id}`}
+          className='coupon-card__image'
+        >
+          <Text className='coupon-card__image-text'>🍔</Text>
+        </View>
 
-      <View className='coupon-card__content'>
-        {item.tags && item.tags.length > 0 && (
-          <View className='coupon-card__tags'>
-            {item.tags.map((tag) => (
-              <CouponTag key={tag.text} {...tag} />
-            ))}
-          </View>
-        )}
+        <View className='coupon-card__content'>
+          {item.tags && item.tags.length > 0 && (
+            <View className='coupon-card__tags'>
+              {item.tags.map((tag) => (
+                <CouponTag key={tag.text} {...tag} />
+              ))}
+            </View>
+          )}
 
-        <Text className='coupon-card__title'>{item.title}</Text>
-        {item.subtitle && !item.isPackage && (
-          <Text className='coupon-card__subtitle'>{item.subtitle}</Text>
-        )}
-
-        {item.isPackage ? (
-          <Text className='coupon-card__package-subtitle'>
-            {item.subtitle}
+          <Text className='coupon-card__title' numberOfLines={2}>
+            {item.title}
           </Text>
-        ) : (
-          <Text
-            className={`coupon-card__price ${
-              isClaimed || isUnavailable ? 'coupon-card__price--disabled' : ''
-            }`}
-          >
-            {item.priceText}
+          {item.subtitle && !item.isPackage && (
+            <Text className='coupon-card__subtitle'>{item.subtitle}</Text>
+          )}
+
+          {item.isPackage ? (
+            <Text className='coupon-card__package-subtitle'>
+              {item.subtitle}
+            </Text>
+          ) : (
+            <Text
+              className={`coupon-card__price ${
+                isClaimed || isUnavailable ? 'coupon-card__price--disabled' : ''
+              }`}
+            >
+              {item.priceText}
+            </Text>
+          )}
+
+          {!item.isPackage && (
+            <Text className='coupon-card__validity'>{item.validity}</Text>
+          )}
+        </View>
+
+        <View
+          className={`coupon-card__action ${
+            item.isPackage ? 'coupon-card__action--package' : ''
+          }`}
+        >
+          {item.status === 'available' && (
+            <View
+              id={`claim-btn-${item.id}`}
+              className='coupon-card__btn coupon-card__btn--claim'
+              onClick={
+                item.isPackage && !isClaiming ? () => onClaim?.(item) : undefined
+              }
+            >
+              {isClaiming ? '领券中...' : '领券'}
+            </View>
+          )}
+          {isClaimed && (
+            <View className='coupon-card__btn coupon-card__btn--use'>
+              立即使用
+            </View>
+          )}
+          {isUnavailable && (
+            <View className='coupon-card__btn coupon-card__btn--disabled'>
+              不可用
+            </View>
+          )}
+        </View>
+      </View>
+
+      {item.reason && (
+        <View className='coupon-card__rule'>
+          <Text className='coupon-card__reason' numberOfLines={1}>
+            {item.reason}
           </Text>
-        )}
-
-        {!item.isPackage && (
-          <Text className='coupon-card__validity'>{item.validity}</Text>
-        )}
-        {item.reason && (
-          <Text className='coupon-card__reason'>{item.reason}</Text>
-        )}
-      </View>
-
-      <View
-        className={`coupon-card__action ${
-          item.isPackage ? 'coupon-card__action--package' : ''
-        }`}
-      >
-        {item.status === 'available' && (
-          <View
-            id={`claim-btn-${item.id}`}
-            className='coupon-card__btn coupon-card__btn--claim'
-            onClick={
-              item.isPackage && !isClaiming ? () => onClaim?.(item) : undefined
-            }
-          >
-            {isClaiming ? '领券中...' : '领券'}
-          </View>
-        )}
-        {isClaimed && (
-          <View className='coupon-card__btn coupon-card__btn--use'>
-            立即使用
-          </View>
-        )}
-        {isUnavailable && (
-          <View className='coupon-card__btn coupon-card__btn--disabled'>
-            不可用
-          </View>
-        )}
-      </View>
+        </View>
+      )}
 
       {isClaimed && (
         <View className='coupon-card__watermark-wrap'>
