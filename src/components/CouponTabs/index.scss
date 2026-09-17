@@ -1,0 +1,42 @@
+.coupon-tabs {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  height: 88rpx;
+  background-color: #ffffff;
+  border-bottom-width: 1rpx;
+  border-bottom-style: solid;
+  border-bottom-color: #f0f0f0;
+}
+
+.coupon-tabs__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  position: relative;
+}
+
+.coupon-tabs__text {
+  font-size: 28rpx;
+  color: #666666;
+}
+
+.coupon-tabs__item--active .coupon-tabs__text {
+  color: #333333;
+  font-weight: 500;
+}
+
+.coupon-tabs__indicator {
+  position: absolute;
+  bottom: 0;
+  width: 40rpx;
+  height: 4rpx;
+  background-color: #d6001c;
+  border-top-left-radius: 2rpx;
+  border-top-right-radius: 2rpx;
+  border-bottom-left-radius: 2rpx;
+  border-bottom-right-radius: 2rpx;
+}
