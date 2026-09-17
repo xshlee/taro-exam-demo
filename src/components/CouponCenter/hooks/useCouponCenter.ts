@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import type { CouponItem } from '../../../types/coupon'
 import { useAnimation } from './useAnimation'
 import { useMeasurements } from './useMeasurements'
@@ -133,24 +133,12 @@ export function useCouponCenter() {
     }
   }, [animState.phase])
 
-  const footerText = useMemo(() => {
-    if (
-      animState.phase === 'exploding' ||
-      animState.phase === 'landed' ||
-      animState.phase === 'flashing'
-    )
-      return '领券中...'
-    if (animState.phase === 'done') return '再看一次'
-    return '一键领券'
-  }, [animState.phase])
-
   return {
     coupons,
     phase: animState.phase,
     packets: animState.packets,
     flashOn: animState.flashOn,
     claimingId,
-    footerText,
     toast,
     claimPackage,
   }

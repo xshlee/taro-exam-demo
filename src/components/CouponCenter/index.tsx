@@ -11,13 +11,10 @@ interface CouponCenterProps {
 }
 
 export default function CouponCenter({ visible, onClose }: CouponCenterProps) {
-  const { coupons, packets, flashOn, claimingId, footerText, toast, claimPackage } =
+  const { coupons, packets, flashOn, claimingId, toast, claimPackage } =
     useCouponCenter()
 
   if (!visible) return null
-
-  // 底部「一键领券」等同点击券包卡片的「领券」
-  const packageId = coupons.find((c) => c.isPackage)?.id
 
   return (
     <View className='coupon-center'>
@@ -36,14 +33,6 @@ export default function CouponCenter({ visible, onClose }: CouponCenterProps) {
           claimingId={claimingId}
           onClaim={(item) => claimPackage(item.id)}
         />
-        <View className='coupon-center__footer'>
-          <View
-            className='coupon-center__footer-btn'
-            onClick={packageId ? () => claimPackage(packageId) : undefined}
-          >
-            <Text className='coupon-center__footer-text'>{footerText}</Text>
-          </View>
-        </View>
 
         {packets.length > 0 && (
           <View className='coupon-center__packets'>
