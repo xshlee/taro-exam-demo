@@ -1,0 +1,12 @@
+.red-packet {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.red-packet__icon {
+  font-size: 56rpx;
+}
