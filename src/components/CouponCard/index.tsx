@@ -85,7 +85,11 @@ function CouponCard(
         )}
       </View>
 
-      <View className='coupon-card__action'>
+      <View
+        className={`coupon-card__action ${
+          item.isPackage ? 'coupon-card__action--package' : ''
+        }`}
+      >
         {item.status === 'available' && (
           <View
             id={`claim-btn-${item.id}`}

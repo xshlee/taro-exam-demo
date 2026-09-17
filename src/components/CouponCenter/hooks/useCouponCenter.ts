@@ -45,7 +45,6 @@ function generateNewCoupons(seedId: string): CouponItem[] {
     subtitle: '新品尝鲜',
     priceText: '19.9元',
     validity: '2025.10.29-11.29',
-    tags: [{ text: '新品尝鲜', color: '#ff4d4f', bgColor: '#fff2f0' }],
     status: 'claimed',
     reason: '规则说明：今日剩余3次；每周三可用',
     isNew: true,

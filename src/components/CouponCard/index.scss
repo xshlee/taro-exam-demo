@@ -102,9 +102,16 @@
 }
 
 .coupon-card__action {
+  align-self: stretch;
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: flex-end;
   margin-left: 16rpx;
+}
+
+.coupon-card__action--package {
+  justify-content: center;
 }
 
 .coupon-card__btn {
@@ -127,7 +134,7 @@
 
 .coupon-card__btn--use {
   color: #ffffff;
-  background-color: #999999;
+  background-color: #d6001c;
 }
 
 .coupon-card__btn--disabled {
@@ -146,12 +153,13 @@
 }
 
 .coupon-card__watermark {
-  width: 80rpx;
-  height: 80rpx;
-  border-top-left-radius: 40rpx;
-  border-top-right-radius: 40rpx;
-  border-bottom-left-radius: 40rpx;
-  border-bottom-right-radius: 40rpx;
+  width: 100rpx;
+  height: 100rpx;
+  margin-bottom: 40rpx;
+  border-top-left-radius: 50rpx;
+  border-top-right-radius: 50rpx;
+  border-bottom-left-radius: 50rpx;
+  border-bottom-right-radius: 50rpx;
   border-top-width: 2rpx;
   border-top-style: solid;
   border-top-color: #ff9999;
@@ -171,6 +179,6 @@
 }
 
 .coupon-card__watermark-text {
-  font-size: 20rpx;
+  font-size: 24rpx;
   color: #ff9999;
 }
