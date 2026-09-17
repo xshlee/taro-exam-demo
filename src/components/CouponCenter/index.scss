@@ -14,6 +14,11 @@
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
+  transition: opacity 300ms ease-out;
+}
+
+.coupon-center__mask--hidden {
+  opacity: 0;
 }
 
 .coupon-center__sheet {
@@ -28,6 +33,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: transform 300ms ease-out;
+}
+
+.coupon-center__sheet--hidden {
+  transform: translateY(100%);
 }
 
 .coupon-center__header {
