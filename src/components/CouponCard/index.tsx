@@ -112,6 +112,14 @@ function CouponCard(
             </View>
           )}
         </View>
+
+        {isClaimed && (
+          <View className='coupon-card__watermark-wrap'>
+            <View className='coupon-card__watermark'>
+              <Text className='coupon-card__watermark-text'>已领取</Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {item.reason && (
@@ -119,14 +127,6 @@ function CouponCard(
           <Text className='coupon-card__reason' numberOfLines={1}>
             {item.reason}
           </Text>
-        </View>
-      )}
-
-      {isClaimed && (
-        <View className='coupon-card__watermark-wrap'>
-          <View className='coupon-card__watermark'>
-            <Text className='coupon-card__watermark-text'>已领取</Text>
-          </View>
         </View>
       )}
     </View>
