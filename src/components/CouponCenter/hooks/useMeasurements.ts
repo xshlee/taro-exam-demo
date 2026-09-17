@@ -32,16 +32,18 @@ export function useMeasurements() {
           x: btn.left + btn.width / 2 - sheet.left,
           y: btn.top + btn.height / 2 - sheet.top,
         }
-        const results: MeasuredTarget[] = input.couponIds.map((id, index) => {
+        const results: MeasuredTarget[] = []
+        input.couponIds.forEach((id, index) => {
           const img = imgRects[index]
-          return {
+          if (!img) return
+          results.push({
             couponId: id,
             start,
             end: {
               x: img.left + img.width / 2 - sheet.left,
               y: img.top + img.height / 2 - sheet.top,
             },
-          }
+          })
         })
         resolve(results)
       })
