@@ -94,7 +94,9 @@ function CouponCard(
           <View
             id={`claim-btn-${item.id}`}
             className='coupon-card__btn coupon-card__btn--claim'
-            onClick={isClaiming ? undefined : () => onClaim?.(item)}
+            onClick={
+              item.isPackage && !isClaiming ? () => onClaim?.(item) : undefined
+            }
           >
             {isClaiming ? '领券中...' : '领券'}
           </View>

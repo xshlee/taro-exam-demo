@@ -66,18 +66,22 @@
   border-top-color: #f0f0f0;
 }
 
-.coupon-center__footer-text {
+.coupon-center__footer-btn {
   width: 100%;
   height: 80rpx;
-  line-height: 80rpx;
-  text-align: center;
   background-color: #d6001c;
-  color: #ffffff;
-  font-size: 30rpx;
   border-top-left-radius: 40rpx;
   border-top-right-radius: 40rpx;
   border-bottom-left-radius: 40rpx;
   border-bottom-right-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.coupon-center__footer-text {
+  color: #ffffff;
+  font-size: 30rpx;
 }
 
 .coupon-center__packets {

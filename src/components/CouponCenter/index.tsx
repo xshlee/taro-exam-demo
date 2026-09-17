@@ -16,6 +16,9 @@ export default function CouponCenter({ visible, onClose }: CouponCenterProps) {
 
   if (!visible) return null
 
+  // 底部「一键领券」等同点击券包卡片的「领券」
+  const packageId = coupons.find((c) => c.isPackage)?.id
+
   return (
     <View className='coupon-center'>
       <View className='coupon-center__mask' onClick={onClose} />
@@ -34,7 +37,12 @@ export default function CouponCenter({ visible, onClose }: CouponCenterProps) {
           onClaim={(item) => claimPackage(item.id)}
         />
         <View className='coupon-center__footer'>
-          <Text className='coupon-center__footer-text'>{footerText}</Text>
+          <View
+            className='coupon-center__footer-btn'
+            onClick={packageId ? () => claimPackage(packageId) : undefined}
+          >
+            <Text className='coupon-center__footer-text'>{footerText}</Text>
+          </View>
         </View>
 
         {packets.length > 0 && (

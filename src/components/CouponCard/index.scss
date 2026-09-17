@@ -115,6 +115,9 @@
 }
 
 .coupon-card__btn {
+  box-sizing: border-box;
+  width: 144rpx;
+  text-align: center;
   font-size: 24rpx;
   line-height: 36rpx;
   padding-top: 10rpx;
