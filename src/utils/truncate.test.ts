@@ -41,4 +41,19 @@ describe('truncateAddress', () => {
     expect(result.showEndTag).toBe(true)
     expect(result.line2Ellipsis).toBe(false)
   })
+
+  test('首行接近边界时尽量容纳下一个汉字', () => {
+    const result = truncateAddress(
+      '城开YOYO联合办公 6楼超过固定长度折行3折行折行折行折行折行折行折行',
+      '04:59 后餐厅停止接单',
+      {
+        containerWidth: 598,
+        leadingWidth: 190.8,
+        fontSize: 28,
+      }
+    )
+
+    expect(result.line1).toContain('超过固')
+    expect(result.line2.startsWith('定长度')).toBe(true)
+  })
 })

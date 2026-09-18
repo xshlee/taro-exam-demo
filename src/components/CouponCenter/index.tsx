@@ -1,12 +1,30 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { View, Text } from '@tarojs/components'
+import type { ComponentType } from 'react'
 import CouponTabs from '../CouponTabs'
 import CouponList from '../CouponList'
 import RedPacket from '../RedPacket'
 import { useCouponCenter } from './hooks/useCouponCenter'
 import { isRN } from '../../utils/platform'
-import type { CouponItem, FlyingPacket } from '../../types/coupon'
+import type {
+  CouponImageLayout,
+  CouponItem,
+  CouponLayoutSnapshot,
+  FlyingPacket,
+} from '../../types/coupon'
 import './index.scss'
+
+interface LayoutEvent {
+  nativeEvent: {
+    layout: CouponImageLayout
+  }
+}
+
+type LayoutViewProps = React.ComponentProps<typeof View> & {
+  onLayout?: (event: LayoutEvent) => void
+}
+
+const LayoutView = View as ComponentType<LayoutViewProps>
 
 interface CouponCenterProps {
   visible: boolean
@@ -19,7 +37,11 @@ interface CouponSheetProps {
   flashOn: boolean
   claimingId: string | null
   toast: string | null
-  onClaim: (id: string) => void
+  onClaim: (
+    id: string,
+    getSnapshot: () => CouponLayoutSnapshot,
+    waitForScrollSettled: () => Promise<void>
+  ) => void
   onClose: () => void
 }
 
@@ -36,11 +58,58 @@ function CouponSheet({
   const [leaving, setLeaving] = useState(false)
   const [scrollTarget, setScrollTarget] = useState('')
   const firstRenderRef = useRef(true)
+  const sheetLayoutRef = useRef<CouponImageLayout | null>(null)
+  const listLayoutRef = useRef<CouponImageLayout | null>(null)
+  const cardLayoutsRef = useRef<Record<string, CouponImageLayout>>({})
+  const mainLayoutsRef = useRef<Record<string, CouponImageLayout>>({})
+  const actionLayoutsRef = useRef<Record<string, CouponImageLayout>>({})
+  const imageLayoutsRef = useRef<Record<string, CouponImageLayout>>({})
+  const buttonLayoutsRef = useRef<Record<string, CouponImageLayout>>({})
+  const scrollOffsetRef = useRef(0)
+  const scrollSettledWaitersRef = useRef<Array<() => void>>([])
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const waitForScrollSettled = useCallback(
+    () =>
+      new Promise<void>((resolve) => {
+        if (!scrollTimerRef.current) {
+          resolve()
+          return
+        }
+        scrollSettledWaitersRef.current.push(resolve)
+      }),
+    []
+  )
+
+  const notifyScroll = useCallback((offset: number) => {
+    scrollOffsetRef.current = offset
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current)
+    scrollTimerRef.current = setTimeout(() => {
+      scrollTimerRef.current = null
+      const waiters = scrollSettledWaitersRef.current.splice(0)
+      waiters.forEach((resolve) => resolve())
+    }, 80)
+  }, [])
+
+  const layoutSnapshot = useCallback((): CouponLayoutSnapshot => ({
+    sheet: sheetLayoutRef.current,
+    list: listLayoutRef.current,
+    cards: cardLayoutsRef.current,
+    mains: mainLayoutsRef.current,
+    actions: actionLayoutsRef.current,
+    images: imageLayoutsRef.current,
+    buttons: buttonLayoutsRef.current,
+    scrollOffset: scrollOffsetRef.current,
+  }), [])
 
   // 挂载后下一帧移除 hidden 态，触发滑入/淡入过渡
   useEffect(() => {
     const timer = setTimeout(() => setEntered(true), 30)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current)
+      scrollSettledWaitersRef.current.splice(0).forEach((resolve) => resolve())
+    }
   }, [])
 
   // 券列表变化（领券插入新卡）后滚到底部，保证最下面的卡片完整可见
@@ -50,7 +119,8 @@ function CouponSheet({
       return
     }
     setScrollTarget('coupon-list-bottom')
-    const timer = setTimeout(() => setScrollTarget(''), 50)
+    const timer = setTimeout(() => setScrollTarget(''), 120)
+    notifyScroll(scrollOffsetRef.current)
     return () => clearTimeout(timer)
   }, [coupons])
 
@@ -81,8 +151,11 @@ function CouponSheet({
         }`}
         onClick={requestClose}
       />
-      <View
+      <LayoutView
         id='coupon-center-sheet'
+        onLayout={(event) => {
+          sheetLayoutRef.current = event.nativeEvent.layout
+        }}
         className={`coupon-center__sheet ${
           shown ? '' : 'coupon-center__sheet--hidden'
         }`}
@@ -99,7 +172,29 @@ function CouponSheet({
           flashOn={flashOn}
           claimingId={claimingId}
           scrollIntoView={scrollTarget}
-          onClaim={(item) => onClaim(item.id)}
+          onClaim={(item) =>
+            onClaim(item.id, layoutSnapshot, waitForScrollSettled)
+          }
+          onListLayout={(layout) => {
+            listLayoutRef.current = layout
+          }}
+          onScrollOffsetChange={notifyScroll}
+          onScrollSettled={() => undefined}
+          onCardLayout={(id, layout) => {
+            cardLayoutsRef.current[id] = layout
+          }}
+          onMainLayout={(id, layout) => {
+            mainLayoutsRef.current[id] = layout
+          }}
+          onActionLayout={(id, layout) => {
+            actionLayoutsRef.current[id] = layout
+          }}
+          onImageLayout={(id, layout) => {
+            imageLayoutsRef.current[id] = layout
+          }}
+          onButtonLayout={(id, layout) => {
+            buttonLayoutsRef.current[id] = layout
+          }}
         />
 
         {packets.length > 0 && (
@@ -121,7 +216,7 @@ function CouponSheet({
             </View>
           </View>
         )}
-      </View>
+      </LayoutView>
     </View>
   )
 }

@@ -26,6 +26,29 @@ export interface Point {
   y: number
 }
 
+export interface CouponImageLayout {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+export type CouponLayoutHandler = (
+  couponId: string,
+  layout: CouponImageLayout
+) => void
+
+export interface CouponLayoutSnapshot {
+  sheet: CouponImageLayout | null
+  list: CouponImageLayout | null
+  cards: Record<string, CouponImageLayout>
+  mains: Record<string, CouponImageLayout>
+  actions: Record<string, CouponImageLayout>
+  images: Record<string, CouponImageLayout>
+  buttons: Record<string, CouponImageLayout>
+  scrollOffset: number
+}
+
 export interface FlyingPacket {
   id: string
   targetCouponId: string

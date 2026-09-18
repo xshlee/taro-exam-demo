@@ -1,5 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
-import type { CouponItem } from '../../../types/coupon'
+import type {
+  CouponItem,
+  CouponLayoutSnapshot,
+} from '../../../types/coupon'
 import { useAnimation } from './useAnimation'
 import { useMeasurements } from './useMeasurements'
 
@@ -55,7 +58,7 @@ export function useCouponCenter() {
   const [coupons, setCoupons] = useState<CouponItem[]>(INITIAL_COUPONS)
   const [toast, setToast] = useState<string | null>(null)
   const [claimingId, setClaimingId] = useState<string | null>(null)
-  const { measureStart, measureEnds } = useMeasurements()
+  const { measureStart, measureEndsStable } = useMeasurements()
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
   useEffect(() => {
@@ -70,7 +73,7 @@ export function useCouponCenter() {
   const { state: animState, startExplosion, clear } = useAnimation(handleAnimationDone)
 
   const claimPackage = useCallback(
-    (packageId: string) => {
+    (packageId: string, getSnapshot: () => CouponLayoutSnapshot) => {
       if (
         claimingId !== null ||
         (animState.phase !== 'idle' && animState.phase !== 'done')
@@ -85,7 +88,7 @@ export function useCouponCenter() {
       timersRef.current.push(
         setTimeout(() => {
           // 1. 先测量券包按钮起点（此时卡片还在）
-          measureStart(packageId).then((start) => {
+          measureStart(packageId, getSnapshot()).then((start) => {
             // 2. 动画播放前就让券包卡片消失，新券插入原位置
             setCoupons((prev) => {
               const pkgIndex = prev.findIndex((c) => c.id === packageId)
@@ -100,9 +103,12 @@ export function useCouponCenter() {
             // 3. 等待新券渲染后测量落点
             timersRef.current.push(
               setTimeout(() => {
-                measureEnds(newCoupons.map((c) => c.id)).then((ends) => {
+                measureEndsStable(
+                  newCoupons.map((c) => c.id),
+                  getSnapshot
+                ).then((ends) => {
                   setClaimingId(null)
-                  if (!start || ends.length === 0) return
+                  if (!start || ends.length !== newCoupons.length) return
                   setToast(`成功领取${newCoupons.length}张券`)
                   startExplosion(
                     ends.map((e) => ({
@@ -118,7 +124,14 @@ export function useCouponCenter() {
         }, CLAIM_DELAY)
       )
     },
-    [claimingId, animState.phase, clear, measureStart, measureEnds, startExplosion]
+    [
+      claimingId,
+      animState.phase,
+      clear,
+      measureStart,
+      measureEndsStable,
+      startExplosion,
+    ]
   )
 
   // 动画结束后延迟清除 isNew 标记

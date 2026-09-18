@@ -1,5 +1,9 @@
 import Taro from '@tarojs/taro'
-import type { Point } from '../../../types/coupon'
+import type {
+  CouponLayoutSnapshot,
+  Point,
+} from '../../../types/coupon'
+import { getCouponImageCenter } from '../../../utils/coupon-layout'
 import { isRN } from '../../../utils/platform'
 
 export interface MeasuredTarget {
@@ -14,7 +18,6 @@ export interface MeasuredEnd {
 }
 
 export function useMeasurements() {
-  // 券包按钮中心（相对浮层），需在券包卡片移除前测量
   const measureStartWeb = (packageId: string): Promise<Point | null> => {
     return new Promise((resolve) => {
       const query = Taro.createSelectorQuery()
@@ -35,14 +38,11 @@ export function useMeasurements() {
     })
   }
 
-  // 新券图中心（相对浮层），需在新券渲染后测量
   const measureEndsWeb = (couponIds: string[]): Promise<MeasuredEnd[]> => {
     return new Promise((resolve) => {
       const query = Taro.createSelectorQuery()
       query.select(`#coupon-center-sheet`).boundingClientRect()
-      couponIds.forEach((id) => {
-        query.select(`#coupon-img-${id}`).boundingClientRect()
-      })
+      couponIds.forEach((id) => query.select(`#coupon-img-${id}`).boundingClientRect())
       query.exec((rects) => {
         const [sheet, ...imgRects] =
           rects as Taro.NodesRef.BoundingClientRectCallbackResult[]
@@ -53,7 +53,7 @@ export function useMeasurements() {
         const results: MeasuredEnd[] = []
         couponIds.forEach((id, index) => {
           const img = imgRects[index]
-          if (!img) return
+          if (!img || img.width <= 0 || img.height <= 0) return
           results.push({
             couponId: id,
             end: {
@@ -67,29 +67,116 @@ export function useMeasurements() {
     })
   }
 
-  // RN 兜底：基于标准 375dp 屏宽估算位置，1rpx ≈ 0.5dp
-  const measureStartRN = async (): Promise<Point | null> => {
-    return { x: 300, y: 240 }
+  const measureStartRN = async (
+    snapshot: CouponLayoutSnapshot,
+    packageId: string
+  ): Promise<Point | null> => {
+    const button = snapshot.buttons[packageId]
+    const action = snapshot.actions[packageId]
+    const main = snapshot.mains[packageId]
+    const card = snapshot.cards[packageId]
+    const list = snapshot.list
+    const sheet = snapshot.sheet
+    if (!button || !action || !main || !card || !list || !sheet) return null
+    return {
+      x:
+        list.x +
+        card.x +
+        main.x +
+        action.x +
+        button.x +
+        button.width / 2 -
+        sheet.x,
+      y:
+        list.y +
+        card.y +
+        main.y +
+        action.y +
+        button.y +
+        button.height / 2 -
+        snapshot.scrollOffset -
+        sheet.y,
+    }
   }
 
-  const measureEndsRN = async (couponIds: string[]): Promise<MeasuredEnd[]> => {
-    const rpx = (v: number) => v * 0.5
-    return couponIds.map((id, index) => ({
-      couponId: id,
-      end: {
-        x: rpx(90),
-        y: rpx(260 + index * 200 + 70),
-      },
-    }))
+  const measureEndsRN = async (
+    couponIds: string[],
+    snapshot: CouponLayoutSnapshot
+  ): Promise<MeasuredEnd[]> => {
+    if (!snapshot.sheet || !snapshot.list) return []
+    return couponIds.flatMap((id) => {
+      const end = getCouponImageCenter(
+        snapshot.sheet,
+        snapshot.list,
+        snapshot.cards[id] ?? null,
+        snapshot.mains[id] ?? null,
+        snapshot.images[id] ?? null,
+        snapshot.scrollOffset
+      )
+      return end ? [{ couponId: id, end }] : []
+    })
   }
 
-  const measureStart = (packageId: string): Promise<Point | null> => {
-    return isRN ? measureStartRN() : measureStartWeb(packageId)
+  const measureStart = (
+    packageId: string,
+    snapshot?: CouponLayoutSnapshot
+  ): Promise<Point | null> =>
+    isRN
+      ? measureStartRN(snapshot ?? emptySnapshot(), packageId)
+      : measureStartWeb(packageId)
+
+  const measureEnds = (
+    couponIds: string[],
+    snapshot?: CouponLayoutSnapshot
+  ): Promise<MeasuredEnd[]> =>
+    isRN
+      ? measureEndsRN(couponIds, snapshot ?? emptySnapshot())
+      : measureEndsWeb(couponIds)
+
+  const measureEndsStable = async (
+    couponIds: string[],
+    getSnapshot?: () => CouponLayoutSnapshot
+  ): Promise<MeasuredEnd[]> => {
+    let previous: MeasuredEnd[] = []
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const current = await measureEnds(couponIds, getSnapshot?.())
+      if (
+        current.length === couponIds.length &&
+        previous.length === current.length &&
+        current.every((target, index) =>
+          isSamePoint(target.end, previous[index].end)
+        )
+      ) {
+        return current
+      }
+      previous = current
+      await wait(50)
+    }
+
+    return []
   }
 
-  const measureEnds = (couponIds: string[]): Promise<MeasuredEnd[]> => {
-    return isRN ? measureEndsRN(couponIds) : measureEndsWeb(couponIds)
-  }
+  return { measureStart, measureEnds, measureEndsStable }
+}
 
-  return { measureStart, measureEnds }
+function isSamePoint(left: Point, right: Point): boolean {
+  return Math.abs(left.x - right.x) <= 0.5 && Math.abs(left.y - right.y) <= 0.5
+}
+
+function wait(duration: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, duration))
+}
+
+function emptySnapshot(): CouponLayoutSnapshot {
+  return {
+    sheet: null,
+    list: null,
+    cards: {},
+    mains: {},
+    actions: {},
+    images: {},
+    buttons: {},
+    scrollOffset: 0,
+  }
 }
