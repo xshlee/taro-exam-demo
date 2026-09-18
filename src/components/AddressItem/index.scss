@@ -65,8 +65,22 @@
 }
 
 .address-item__text-wrap {
-  max-height: 80rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.address-item__line {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.address-item__ellipsis {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .address-item__text {
@@ -76,6 +90,8 @@
 }
 
 .address-item__end-tag {
+  flex-shrink: 0;
+  margin-left: 0;
   font-size: 20rpx;
   line-height: 28rpx;
   padding-top: 2rpx;
@@ -86,7 +102,6 @@
   border-top-right-radius: 6rpx;
   border-bottom-left-radius: 6rpx;
   border-bottom-right-radius: 6rpx;
-  margin-left: 8rpx;
   color: #ff4d4f;
   background-color: #ffffff;
   border-top-width: 1rpx;
@@ -101,8 +116,19 @@
   border-right-color: #ff9999;
   border-bottom-color: #ff9999;
   border-left-color: #ff9999;
-  max-width: 245rpx;
+  max-width: 50%;
   overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.address-item__ellipsis--manual {
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.address-item__ellipsis--manual .address-item__text {
+  white-space: nowrap;
 }
 
 .address-item__meta {
@@ -124,6 +150,8 @@
 }
 
 .address-item__action {
+  width: 32rpx;
+  flex-shrink: 0;
   margin-left: 16rpx;
   display: flex;
   align-items: center;

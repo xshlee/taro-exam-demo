@@ -12,3 +12,9 @@
 .coupon-list__safe-area {
   height: 40rpx;
 }
+
+/* H5 滚动修复：Taro scroll-view 内部滚动容器无高度，
+   必须撑满宿主才有滚动范围（weapp 无此元素，RN 忽略） */
+.coupon-list .taro-scroll-view__scroll-y {
+  height: 100%;
+}

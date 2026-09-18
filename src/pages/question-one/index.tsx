@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { View } from '@tarojs/components'
 import AddressItem from '../../components/AddressItem'
 import type { AddressItemData } from '../../types/address'
@@ -54,7 +55,6 @@ const MOCK_LIST: AddressItemData[] = [
       { text: '常用', variant: 'solid' },
       { text: '公司', variant: 'outline' },
     ],
-    selected: true,
   },
   {
     id: '6',
@@ -66,10 +66,17 @@ const MOCK_LIST: AddressItemData[] = [
 ]
 
 export default function Index() {
+  const [selectedId, setSelectedId] = useState('5')
+
   return (
     <View className='question-one-page'>
       {MOCK_LIST.map((item) => (
-        <AddressItem key={item.id} {...item} />
+        <AddressItem
+          key={item.id}
+          {...item}
+          selected={item.id === selectedId}
+          onSelect={() => setSelectedId(item.id)}
+        />
       ))}
     </View>
   )

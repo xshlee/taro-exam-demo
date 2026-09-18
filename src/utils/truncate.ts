@@ -3,15 +3,16 @@ import { charWidth, textWidth } from './measure'
 export interface TruncateOptions {
   containerWidth: number
   leadingWidth: number
-  endTagWidth: number
   fontSize: number
-  maxLines?: number
-  endTagMaxRatio?: number
-  ellipsis?: string
 }
 
 export interface TruncateResult {
-  displayAddress: string
+  singleLine: boolean
+  line1: string
+  line2: string
+  line2Display: string
+  line2Ellipsis: boolean
+  line2LetterSpacing: number
   showEndTag: boolean
 }
 
@@ -20,28 +21,12 @@ export function truncateAddress(
   endTag: string | undefined,
   options: TruncateOptions
 ): TruncateResult {
-  const {
-    containerWidth,
-    leadingWidth,
-    endTagWidth: rawEndTagWidth,
-    fontSize,
-    endTagMaxRatio = 0.5,
-    ellipsis = '…',
-  } = options
-
+  const { containerWidth, leadingWidth, fontSize } = options
   const hasEndTag = Boolean(endTag)
-  const maxEndTagWidth = containerWidth * endTagMaxRatio
-  const effectiveEndTagWidth = hasEndTag
-    ? Math.min(rawEndTagWidth, maxEndTagWidth)
-    : 0
-
-  const ellipsisWidth = textWidth(ellipsis, fontSize)
-  const line1Available = Math.max(containerWidth - leadingWidth, 0)
-  const line2Available = Math.max(containerWidth - effectiveEndTagWidth, 0)
-
   const chars = Array.from(address)
   const prefixSum: number[] = []
   let sum = 0
+
   for (const char of chars) {
     sum += charWidth(char, fontSize)
     prefixSum.push(sum)
@@ -68,20 +53,61 @@ export function truncateAddress(
     return lo
   }
 
-  const line1End = fit(0, line1Available)
-  const line2End = fit(line1End, line2Available)
+  const line1End = fit(0, Math.max(containerWidth - leadingWidth, 0))
+  const line1 = chars.slice(0, line1End).join('')
 
-  if (line2End >= chars.length) {
-    return { displayAddress: address, showEndTag: hasEndTag }
+  if (line1End >= chars.length) {
+    return {
+      singleLine: true,
+      line1: address,
+      line2: '',
+      line2Display: '',
+      line2Ellipsis: false,
+      line2LetterSpacing: 0,
+      showEndTag: hasEndTag,
+    }
   }
 
-  const truncatedEnd = fit(
-    line1End,
-    Math.max(line2Available - ellipsisWidth, 0)
-  )
+  const remainingWidth = widthBetween(line1End, chars.length)
+  const line2 = chars.slice(line1End).join('')
+
+  if (hasEndTag) {
+    return {
+      singleLine: false,
+      line1,
+      line2,
+      line2Display: line2,
+      line2Ellipsis: false,
+      line2LetterSpacing: 0,
+      showEndTag: true,
+    }
+  }
+
+  const line2Fits = remainingWidth <= containerWidth
+  const ellipsis = '…'
+  const ellipsisWidth = textWidth(ellipsis, fontSize)
+  const line2End = line2Fits
+    ? chars.length
+    : fit(line1End, Math.max(containerWidth - ellipsisWidth, 0))
+  const line2Prefix = chars.slice(line1End, line2End).join('')
+  const line2Display = line2Fits ? line2 : line2Prefix + ellipsis
+  const line2Ellipsis = !line2Fits
+  const line1Right = leadingWidth + textWidth(line1, fontSize)
+  const line2LetterSpacing = line2Ellipsis
+    ? Math.max(
+        (line1Right - textWidth(line2Display, fontSize)) /
+          Math.max(Array.from(line2Display).length - 1, 1),
+        0
+      )
+    : 0
 
   return {
-    displayAddress: chars.slice(0, truncatedEnd).join('') + ellipsis,
-    showEndTag: hasEndTag,
+    singleLine: false,
+    line1,
+    line2,
+    line2Display,
+    line2Ellipsis,
+    line2LetterSpacing,
+    showEndTag: false,
   }
 }

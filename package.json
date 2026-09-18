@@ -62,7 +62,8 @@
     "expo": "~47.0.3",
     "react": "18.1.0",
     "react-dom": "18.1.0",
-    "react-native": "0.70.5"
+    "react-native": "0.70.5",
+    "taro-ui": "^3.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.8.0",

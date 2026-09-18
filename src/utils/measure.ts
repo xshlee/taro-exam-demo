@@ -1,4 +1,6 @@
 const CJK_WIDTH = 1.0
+const LETTER_WIDTH = 0.68
+const DIGIT_WIDTH = 0.58
 const ASCII_WIDTH = 0.55
 const PUNCT_WIDTH = 0.45
 const SPACE_WIDTH = 0.3
@@ -10,31 +12,30 @@ const ASCII_PUNCT_CODES = new Set([
   0x60, 0x7b, 0x7c, 0x7d, 0x7e,
 ])
 
-function isPunctuation(code: number): boolean {
+function isCjkOrFullWidth(code: number): boolean {
   return (
-    ASCII_PUNCT_CODES.has(code) ||
-    code === 0x2026 ||
-    (code >= 0x3000 && code <= 0x303f)
+    (code >= 0x4e00 && code <= 0x9fff) ||
+    (code >= 0x3400 && code <= 0x4dbf) ||
+    (code >= 0xff00 && code <= 0xffef)
   )
 }
 
 export function charWidth(char: string, fontSize: number): number {
+  if (char === '…') return fontSize * CJK_WIDTH
   if (char === ' ') return fontSize * SPACE_WIDTH
+
   const code = char.charCodeAt(0)
 
-  if (isPunctuation(code)) return fontSize * PUNCT_WIDTH
-
+  if (isCjkOrFullWidth(code)) return fontSize * CJK_WIDTH
+  if (code >= 0x30 && code <= 0x39) return fontSize * DIGIT_WIDTH
   if (
-    (code >= 0x4e00 && code <= 0x9fff) ||
-    (code >= 0x3400 && code <= 0x4dbf) ||
-    (code >= 0xff00 && code <= 0xffef)
+    (code >= 0x41 && code <= 0x5a) ||
+    (code >= 0x61 && code <= 0x7a)
   ) {
-    return fontSize * CJK_WIDTH
+    return fontSize * LETTER_WIDTH
   }
-
-  if (code >= 0x21 && code <= 0x7e) {
-    return fontSize * ASCII_WIDTH
-  }
+  if (ASCII_PUNCT_CODES.has(code)) return fontSize * PUNCT_WIDTH
+  if (code >= 0x21 && code <= 0x7e) return fontSize * ASCII_WIDTH
 
   return fontSize * CJK_WIDTH
 }
