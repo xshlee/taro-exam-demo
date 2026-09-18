@@ -1,191 +1,81 @@
 # Taro Exam
 
-一个基于 Taro 3、React 和 TypeScript 实现的多端小程序练习项目，主要用于实现地址列表、优惠券中心及跨端交互效果。
+Taro 3 + React + TypeScript 多端示例项目，主要面向微信小程序，同时支持 H5、支付宝、抖音和 React Native。
 
-## 项目简介
+## 项目内容
 
-本项目以微信小程序为主要运行端，同时保留 H5、支付宝、抖音、QQ、百度智能小程序、京东、快应用、React Native 等平台的构建配置。项目中的页面和公共组件均采用函数组件与 React Hooks 编写，样式使用 Sass，并尽量遵循 Taro 多端开发规范。
-
-## 功能模块
-
-- **题目一：地址列表**
-  - 展示收货人、联系电话和收货地址。
-  - 支持地址选中状态切换。
-  - 支持常用、公司、学校等标签展示。
-  - 支持较长地址文本的多行布局。
-- **题目二：优惠中心**
-  - 通过入口打开优惠券中心。
-  - 支持优惠券分类页签和优惠券列表展示。
-  - 支持领券交互、列表滚动和新优惠券加入后的自动定位。
-  - 支持优惠券领取过程中的状态提示和红包飞行动画。
-  - 支持优惠券中心打开、关闭时的过渡效果。
-- **跨端适配**
-  - 对微信小程序、H5 和 React Native 等平台的布局及动画差异进行兼容处理。
-
-## 技术栈
-
-- [Taro](https://taro-docs.jd.com/) `3.6.40`
-- React `18.1.0`
-- TypeScript `5.1+`
-- Sass / SCSS
-- Jest
-- React Native / Expo
+- 题目一：地址列表、标签布局和跨端文本截断。
+- 题目二：优惠中心浮层、优惠券列表、红包抛物线动画和新券高亮效果。
+- 红包终点使用对应券图的实际中心；Web 端通过 `boundingClientRect` 测量，RN 端通过 `onLayout` 合成多层布局坐标。
 
 ## 环境要求
 
-- Node.js：建议使用当前项目及 Taro 3.6 兼容的 LTS 版本。
-- npm：项目使用 npm 管理依赖。
-- 微信小程序开发：需要安装微信开发者工具，并在构建后导入生成的小程序目录。
+- Node.js：建议使用 Node 18 LTS。
+- npm。
+- 微信小程序开发需要微信开发者工具。
+- RN 构建还需要 Android SDK、JDK 11+ 和匹配的 React Native/Metro 环境。
 
-## 快速开始
-
-### 1. 安装依赖
+## 安装
 
 ```bash
 npm install
 ```
 
-### 2. 启动微信小程序开发模式
+## 开发
 
 ```bash
+# 微信小程序
 npm run dev:weapp
-```
 
-构建完成后，使用微信开发者工具导入项目生成的微信小程序目录即可预览。
-
-### 3. 启动 H5 开发模式
-
-```bash
+# H5
 npm run dev:h5
 ```
 
-启动后根据终端输出的地址，在浏览器中访问 H5 页面。
+微信小程序编译产物位于 `dist/weapp`，使用微信开发者工具导入该目录进行预览。
 
-## 常用命令
-
-### 开发命令
-
-| 命令 | 用途 |
-| --- | --- |
-| `npm run dev:weapp` | 启动微信小程序监听构建 |
-| `npm run dev:h5` | 启动 H5 监听构建 |
-| `npm run dev:alipay` | 启动支付宝小程序监听构建 |
-| `npm run dev:tt` | 启动抖音小程序监听构建 |
-| `npm run dev:swan` | 启动百度智能小程序监听构建 |
-| `npm run dev:rn` | 启动 React Native 监听构建 |
-
-### 生产构建
-
-| 命令 | 用途 |
-| --- | --- |
-| `npm run build:weapp` | 构建微信小程序 |
-| `npm run build:h5` | 构建 H5 |
-| `npm run build:alipay` | 构建支付宝小程序 |
-| `npm run build:tt` | 构建抖音小程序 |
-| `npm run build:swan` | 构建百度智能小程序 |
-| `npm run build:rn` | 构建 React Native |
-| `npm run build:qq` | 构建 QQ 小程序 |
-| `npm run build:jd` | 构建京东小程序 |
-| `npm run build:quickapp` | 构建快应用 |
-| `npm run build:harmony-hybrid` | 构建鸿蒙混合应用 |
-
-所有命令均可以在 `package.json` 中查看完整定义。
-
-### 测试与类型检查
+## 构建
 
 ```bash
-# 运行 Jest 测试
-npm test
-
-# TypeScript 类型检查
-npx tsc --noEmit
+npm run build:weapp
+npm run build:h5
+npm run build:alipay
+npm run build:tt
+npm run build:rn
 ```
 
-当前项目没有在 `package.json` 中配置独立的 `lint` 脚本。如需执行 ESLint，可使用项目依赖中的 ESLint CLI，并根据实际检查范围传入文件或目录。
+## 类型检查与测试
 
-## 项目结构
+```bash
+npx tsc --noEmit
+npm test -- --runInBand
+npm test -- --runInBand __tests__/coupon-layout.test.ts
+```
+
+`coupon-layout.test.ts` 覆盖嵌套布局坐标、滚动偏移变化和布局缺失时的保护逻辑。
+
+## 跨端实现约束
+
+- 样式优先使用 `rpx`、flex 布局和 Taro 支持的跨端属性。
+- RN 不支持 Web CSS 的 `pointer-events` 样式声明；需要设置不可点击时，在 Taro 组件上使用 `pointerEvents='none'` 属性。
+- RN 不支持把 Web CSS transform 字符串直接转换为样式对象。红包动画在 RN 使用 `Animated`，Web 使用贝塞尔曲线和 inline transform。
+- 不在 RN 分支使用固定的券图坐标；所有动画落点必须来自实际布局测量。
+- 新券列表发生滚动时，先等待券图中心连续两次测量稳定，再启动红包动画。
+
+## 已知构建说明
+
+- Taro 构建可能提示缺少用户级 `.taro-global-config/index.json`，不影响项目编译。
+- H5 可能提示入口体积超过 Webpack 建议阈值，该提示不代表编译失败。
+- RN 构建依赖 Node、Metro、React Native 和第三方原生包版本严格匹配；若 Metro 在 `react-native-gesture-handler` 源码处报现代 JavaScript 语法错误，应优先检查依赖版本和 Metro 转译配置。
+
+## 目录结构
 
 ```text
-.
-├── config/                    # Taro 构建及环境配置
-├── src/
-│   ├── app.config.ts          # 页面路由、窗口和 TabBar 配置
-│   ├── app.scss               # 全局样式
-│   ├── app.ts                 # 应用入口
-│   ├── components/            # 公共业务组件
-│   │   ├── AddressItem/       # 地址列表项
-│   │   ├── CouponCard/        # 优惠券卡片
-│   │   ├── CouponCenter/      # 优惠券中心及相关 Hooks
-│   │   ├── CouponList/        # 优惠券列表
-│   │   ├── CouponTabs/        # 优惠券页签
-│   │   ├── CouponTag/         # 优惠券标签
-│   │   ├── RedPacket/         # 红包动画元素
-│   │   └── Tag/               # 通用标签
-│   ├── pages/
-│   │   ├── question-one/      # 题目一：地址列表
-│   │   └── question-two/      # 题目二：优惠中心
-│   ├── types/                 # TypeScript 类型定义
-│   └── utils/                 # 平台判断、布局计算及文本处理工具
-├── project.config.json        # 小程序项目配置
-├── package.json               # 依赖及脚本配置
-└── tsconfig.json              # TypeScript 配置
+src/
+  components/       公共组件
+  pages/            题目页面
+  types/            TypeScript 类型
+  utils/            跨端工具和几何计算
+  app.config.ts     Taro 路由与应用配置
+__tests__/          Jest 测试
+config/             Taro 构建配置
 ```
-
-## 开发规范
-
-- 页面放在 `src/pages`，可复用组件放在 `src/components`。
-- 使用函数组件和 React Hooks，不使用 class 组件。
-- 类型优先使用 `type` 或 `interface`，避免无必要的 `any`。
-- 样式使用 SCSS，跨端布局优先使用 Flex 布局。
-- 尺寸单位统一使用 `rpx`，避免依赖 Web 专属 CSS 特性。
-- 文本超长时考虑多端兼容的换行或省略方案。
-- 新增页面后，需要在 `src/app.config.ts` 中注册路由。
-- 修改后至少执行相关测试和 TypeScript 类型检查，并在目标端进行实际验证。
-
-## 日常开发中的 AI 使用
-
-AI 在项目中主要作为开发辅助工具，用于提高信息整理、重复性编码和问题排查效率。AI 参与的工作量通常约占日常开发的 **30%～50%**；对于模板代码、测试用例、文档整理等重复性工作，参与比例会更高。核心业务规则、架构决策和最终代码验收仍由开发者负责。
-
-### 常用场景
-
-- **需求分析**：拆解需求、梳理页面流程、识别边界条件和异常状态。
-- **代码实现**：根据现有目录结构生成组件、Hooks、接口调用、状态处理和样式代码。
-- **代码重构**：识别重复逻辑，提取公共函数或组件，改善代码可读性。
-- **问题排查**：结合错误信息、调用链和复现步骤定位问题根因。
-- **测试补充**：生成正常流程、边界场景和异常场景的测试用例。
-- **代码审查**：检查类型安全、逻辑回归、跨端兼容性、性能和潜在安全问题。
-- **文档整理**：编写 README、接口说明、变更记录、注释和技术方案。
-
-### 常用工作流
-
-1. **明确目标和上下文**：说明技术栈、预期行为、限制条件及相关文件。
-2. **先分析再修改**：让 AI 先梳理调用关系、影响范围和实现方案。
-3. **分阶段实施**：先处理核心逻辑，再补充样式、交互状态、异常处理和测试。
-4. **本地验证**：运行测试、TypeScript 检查和目标平台构建，并进行实际页面操作。
-5. **人工复核**：重点检查业务规则、跨端差异、数据安全和代码是否符合项目规范。
-6. **整理交付信息**：汇总修改文件、主要变更、验证命令和遗留问题。
-
-### 常用 AI 能力
-
-- 代码库搜索和调用关系分析。
-- 系统化调试和错误根因分析。
-- 测试驱动开发及测试用例生成。
-- 代码审查、类型检查和安全风险提示。
-- 前端布局、交互状态和多端适配建议。
-- 项目文档、开发规范和变更记录维护。
-
-## AI 在编码之外的应用
-
-除了编写代码，AI 还可以辅助完成以下研发工作：
-
-- 将产品需求整理为技术任务、页面流程和接口清单。
-- 阅读接口文档，提取请求参数、响应结构、错误码和调用示例。
-- 编写 README、部署说明、开发规范和版本变更记录。
-- 整理会议纪要，提炼结论、待办事项和负责人。
-- 分析日志，归纳异常模式，辅助定位线上问题。
-- 辅助技术选型，整理不同方案的优缺点和适用场景。
-- 解释新的 API、框架机制和第三方库用法。
-- 优化技术方案、问题说明、上线通知和跨团队沟通内容。
-- 设计数据转换脚本、批处理脚本和项目维护工具。
-
-AI 的输出需要结合项目代码、实际运行结果和团队规范进行验证，不直接替代开发者对业务和质量的最终判断。

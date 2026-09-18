@@ -37,7 +37,7 @@
 }
 
 .coupon-center__sheet--hidden {
-  transform: translateY(100%);
+  opacity: 0;
 }
 
 .coupon-center__header {
@@ -68,7 +68,6 @@
   left: 0;
   right: 0;
   bottom: 0;
-  pointer-events: none;
 }
 
 .coupon-center__toast-wrap {
@@ -80,7 +79,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;
+  flex-direction: column;
 }
 
 .coupon-center__toast {

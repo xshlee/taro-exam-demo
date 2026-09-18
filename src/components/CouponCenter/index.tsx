@@ -22,6 +22,7 @@ interface LayoutEvent {
 
 type LayoutViewProps = React.ComponentProps<typeof View> & {
   onLayout?: (event: LayoutEvent) => void
+  pointerEvents?: 'auto' | 'none' | 'box-none' | 'box-only'
 }
 
 const LayoutView = View as ComponentType<LayoutViewProps>
@@ -198,7 +199,7 @@ function CouponSheet({
         />
 
         {packets.length > 0 && (
-          <View className='coupon-center__packets'>
+          <LayoutView className='coupon-center__packets' pointerEvents='none'>
             {packets.map((packet) => (
               <RedPacket
                 key={packet.id}
@@ -206,15 +207,15 @@ function CouponSheet({
                 progress={packet.progress}
               />
             ))}
-          </View>
+          </LayoutView>
         )}
 
         {toast && (
-          <View className='coupon-center__toast-wrap'>
+          <LayoutView className='coupon-center__toast-wrap' pointerEvents='none'>
             <View className='coupon-center__toast'>
               <Text className='coupon-center__toast-text'>{toast}</Text>
             </View>
-          </View>
+          </LayoutView>
         )}
       </LayoutView>
     </View>
